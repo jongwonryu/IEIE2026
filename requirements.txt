@@ -1,0 +1,8 @@
+diffusers
+numpy
+packaging
+pillow
+safetensors
+torch
+transformers
+accelerate

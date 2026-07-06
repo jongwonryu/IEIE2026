@@ -1,0 +1,68 @@
+소프트웨어 등록
+
+프로그램 명칭:
+SDF-Diffusion: 디퓨전 모델 의미 차이장 분석 및 편집 위치화 프로그램
+(Semantic Difference Fields in Diffusion Models)
+
+창작연월일:
+2026-07-06 (소프트웨어 정리 및 공개일 기준)
+
+맨처음 공표연월일:
+2026-07-06 (소프트웨어 정리 및 공개일 기준)
+
+적용 분야:
+인공지능, 컴퓨터 비전, 이미지 생성, 이미지 편집, 확산 모델, 멀티모달 분석
+
+본 프로그램의 특징:
+이 프로그램은 텍스트 기반 디퓨전 모델에서 source prompt와 target prompt의 의미 차이가 denoising 과정 내부에서 어떻게 표현되는지를 분석하는 소프트웨어입니다. 동일한 noisy latent x_t에 대해 source prompt의 noise prediction을 n_s, target prompt의 noise prediction을 n_t로 계산하고, 두 예측의 차이 n_d = n_t - n_s를 semantic difference field로 정의하여 의미 변화에 따른 디퓨전 모델의 응답 방향을 분석합니다.
+
+본 프로그램은 "red car"에서 "blue car"로의 색상 변화, "daytime street"에서 "night street"로의 시간대 변화와 같이 텍스트 프롬프트의 의미 변화가 U-Net noise prediction space에서 어떤 차이로 나타나는지 측정할 수 있도록 설계되었습니다. 또한 n_d의 spatial magnitude를 계산하여 편집이 강하게 발생해야 하는 영역을 시각화함으로써, prompt 변화가 이미지의 어느 위치에 영향을 주는지 분석할 수 있습니다.
+
+기존 attention map 기반 분석은 모델이 특정 token을 어디에서 참조하는지를 보여주는 데 초점을 두는 반면, 본 프로그램은 prompt가 바뀔 때 실제 denoising prediction이 어디서 얼마나 변화하는지를 측정합니다. 따라서 본 프로그램은 "모델이 어디를 보고 있는가"보다 "모델이 어디를 바꾸려 하는가"를 분석하는 데 적합합니다.
+
+프로그램은 Hugging Face Diffusers 기반 Stable Diffusion 모델을 사용하며, source prompt와 target prompt를 입력받아 timestep별 noise prediction difference, text embedding difference norm, aggregate semantic difference map을 계산하고 저장합니다. 계산된 결과는 NumPy 파일과 PNG heatmap으로 저장되어 후속 분석, 시각화, 편집 위치화 연구에 활용할 수 있습니다.
+
+주요 기능:
+a. Semantic difference field 계산: 동일한 noisy latent에서 source prompt와 target prompt의 noise prediction을 각각 계산하고 n_d = n_t - n_s를 산출
+
+b. Timestep별 denoising response 분석: 여러 diffusion timestep에서 prompt 변화에 따른 noise prediction difference를 계산하여 step-local response field를 분석
+
+c. Text-noise 관계 분석 지원: source text embedding과 target text embedding의 차이 norm을 계산하여 text-space difference와 noise-space difference의 관계 분석에 활용
+
+d. 편집 위치화 map 생성: n_d의 spatial magnitude M_t(x, y) = ||n_d^(t)(x, y)||를 계산하고 여러 timestep에 걸쳐 aggregation하여 semantic difference map 생성
+
+e. 결과 저장 및 시각화: aggregate semantic difference map, timestep별 map, metadata를 각각 NPY, PNG, JSON 형식으로 저장
+
+f. 다양한 prompt 변환 실험 지원: 색상, 객체 속성, 시간대, 조명, 장면 분위기 등 source-target prompt 쌍을 자유롭게 지정하여 분석 가능
+
+g. 재현 가능한 분석 실행: seed, timestep index, 이미지 해상도, diffusion model 경로를 인자로 지정하여 동일 조건의 반복 실험 가능
+
+사용 방법:
+a. Python 패키지를 설치합니다.
+   pip install -r requirements.txt
+
+b. source prompt와 target prompt를 지정하여 예시 스크립트를 실행합니다.
+   SOURCE_PROMPT="a red car" \
+   TARGET_PROMPT="a blue car" \
+   OUTPUT_DIR="outputs/red_to_blue" \
+   bash scripts/run_sdf_analysis.sh
+
+c. 필요 시 Python 파일을 직접 실행하여 모델, timestep, 해상도, seed를 세부적으로 지정합니다.
+   python semantic_difference_fields.py \
+     --model runwayml/stable-diffusion-v1-5 \
+     --source-prompt "a red car" \
+     --target-prompt "a blue car" \
+     --num-inference-steps 50 \
+     --step-indices 5,15,25,35 \
+     --output-dir outputs/red_to_blue
+
+d. 실행 후 output directory에서 semantic_difference_map.npy, semantic_difference_map.png, per_step_maps.npy, metadata.json 파일을 확인합니다.
+
+사용 기종:
+NVIDIA GPU 서버 또는 CUDA를 지원하는 고성능 컴퓨팅 장치
+
+사용 OS:
+Linux
+
+사용 언어:
+Python
